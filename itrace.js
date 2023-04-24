@@ -109,11 +109,33 @@ class CodePosServer {
 
     const col = (x - editor.editorLeft) / editor.charWidth;
     const row = (y - editor.editorTop) / editor.lineHeight;
-    return {
+    return CodePosServer.clamp({
       row: Math.floor(row - zoneRows + 1),
       col: Math.floor(col + 1),
       file: editor.openFile,
-    };
+    }, x, y);
+  }
+
+  static clamp(pos, x, y) {
+    let onLine = false;
+    let onCol = false;
+    const objects = Array.from(document.querySelectorAll('.view-line'));
+    if (objects != null) {
+      objects.forEach((obj) => {
+        const rect = obj.getBoundingClientRect();
+        if (y >= rect.top && y <= rect.bottom) {
+          onLine = true;
+          const rowRect = obj.firstChild.getBoundingClientRect();
+          if (x >= rowRect.left && x <= rowRect.right)
+            onCol = true;
+        }
+      })
+    }
+    if (pos.col < 0 || pos.row < 0 || !onLine || !onCol) {
+      pos.row = -1;
+      pos.col = -1;
+    }
+    return pos;
   }
 
   coordsCallback(websocketEvent) {
