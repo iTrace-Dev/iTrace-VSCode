@@ -18,29 +18,28 @@ class OutputFileWriter {
   write_gaze(event_id, x, y) {
     let editor = CodePosServer.getEditorAttributes();
     let pos = CodePosServer.getFileRowCol(editor, parseInt(x), parseInt(y));
-    if (pos !== undefined)
-      this.file.write("        <response event_id=\""
-                      + event_id
-                      + "\" plugin_time=\""
-                      + (new Date()).getTime().toString()
-                      + "\" x=\""
-                      + x
-                      + "\" y=\""
-                      + y
-                      + "\" gaze_target=\""
-                      + editor.openFile.split("\\").at(-1)
-                      + "\" gaze_target_type=\""
-                      + editor.openFile.split(".").at(-1)
-                      + "\" source_file_path=\""
-                      + editor.openFile
-                      + "\" source_file_line=\""
-                      + pos.row.toString()
-                      + "\" source_file_col=\""
-                      + pos.col.toString()
-                      + "\" editor_line_height=\""
-                      + editor.lineHeight
-                      + "\" editor_font_height=\"\" editor_line_base_x=\"\" editor_line_base_y=\"\"/>\n"
-                     );
+    this.file.write("        <response event_id=\""
+                    + event_id
+                    + "\" plugin_time=\""
+                    + (new Date()).getTime().toString()
+                    + "\" x=\""
+                    + x
+                    + "\" y=\""
+                    + y
+                    + "\" gaze_target=\""
+                    + editor.openFile.split("\\").at(-1)
+                    + "\" gaze_target_type=\""
+                    + editor.openFile.split(".").at(-1)
+                    + "\" source_file_path=\""
+                    + editor.openFile
+                    + "\" source_file_line=\""
+                    + pos.row.toString()
+                    + "\" source_file_col=\""
+                    + pos.col.toString()
+                    + "\" editor_line_height=\""
+                    + editor.lineHeight
+                    + "\" editor_font_height=\"\" editor_line_base_x=\"\" editor_line_base_y=\"\"/>\n"
+                   );
   }
 }
 
@@ -87,16 +86,15 @@ class CodePosServer {
     x /= window.devicePixelRatio;
     y /= window.devicePixelRatio;
 
-    if (CodePosServer.inWindow('.monaco-hover', x, y))
-      return undefined;
-    if (CodePosServer.inWindow('.zone-widget', x, y))
-      return undefined;
-    if (CodePosServer.inWindow('.quick-input-widget', x, y))
-      return undefined;
-    if (CodePosServer.inWindow('.suggest-widget', x, y))
-      return undefined;
-    if (CodePosServer.inWindow('.suggest-details-container', x, y))
-      return undefined;
+    if (!CodePosServer.inWindow('.workbench.parts.editor', x, y))
+      return { row: -1, col: -1, file: editor.openFile };
+
+    if (CodePosServer.inWindow('.monaco-hover', x, y) ||
+        CodePosServer.inWindow('.zone-widget', x, y) ||
+        CodePosServer.inWindow('.quick-input-widget', x, y) ||
+        CodePosServer.inWindow('.suggest-widget', x, y) ||
+        CodePosServer.inWindow('.suggest-details-container', x, y))
+      return { row: -1, col: -1, file: editor.openFile };
 
     // zone widgets 'push' the editor lines down below them, so if we are
     // mapping a coord below them, subtract how many lines each one pushed
@@ -151,29 +149,28 @@ class CodePosServer {
 }
 
 function testCoords() {
-  const editorRegion = document.getElementById("workbench.parts.editor");
+  const editorRegion = document.getElementsByTagName("body")[0];
   editorRegion.addEventListener("mousemove", (evnt) => {
     let editor = CodePosServer.getEditorAttributes();
     let pos = CodePosServer.getFileRowCol(editor, evnt.x, evnt.y);
-    if (pos !== undefined)
-      console.log("<response"
-                  + "x=\""
-                  + evnt.x
-                  + "\" y=\""
-                  + evnt.y
-                  + "\" gaze_target=\""
-                  + editor.openFile.split("\\").at(-1)
-                  + "\" gaze_target_type=\""
-                  + editor.openFile.split(".").at(-1)
-                  + "\" source_file_path=\""
-                  + editor.openFile
-                  + "\" source_file_line=\""
-                  + pos.row.toString()
-                  + "\" source_file_col=\""
-                  + pos.col.toString()
-                  + "\" editor_line_height=\""
-                  + editor.lineHeight
-                 );
+    console.log("<response"
+                + "x=\""
+                + evnt.x
+                + "\" y=\""
+                + evnt.y
+                + "\" gaze_target=\""
+                + editor.openFile.split("\\").at(-1)
+                + "\" gaze_target_type=\""
+                + editor.openFile.split(".").at(-1)
+                + "\" source_file_path=\""
+                + editor.openFile
+                + "\" source_file_line=\""
+                + pos.row.toString()
+                + "\" source_file_col=\""
+                + pos.col.toString()
+                + "\" editor_line_height=\""
+                + editor.lineHeight
+                );
   });
 }
 
