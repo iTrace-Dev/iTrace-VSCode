@@ -101,10 +101,21 @@ class CodePosServer {
     if (CodePosServer.inWindow('.suggest-details-container', x, y))
       return undefined;
 
+    // zone widgets 'push' the editor lines down below them, so if we are
+    // mapping a coord below them, subtract how many lines each one pushed
+    const zones = Array.from(document.querySelectorAll('.zone-widget'));
+    let zoneRows = 0;
+    if (zones != null && zones.length > 0)
+      zones.forEach((z) => {
+        const rect = z.getClientRects();
+        if (rect != null && y >= rect[0].top)
+        zoneRows = rect[0].height / editor.lineHeight;
+      });
+
     const col = (x - editor.editorLeft) / editor.charWidth;
     const row = (y - editor.editorTop) / editor.lineHeight;
     return {
-      row: Math.floor(row + 1),
+      row: Math.floor(row - zoneRows + 1),
       col: Math.floor(col + 1),
       file: editor.openFile,
     };
