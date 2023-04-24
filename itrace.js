@@ -79,20 +79,24 @@ class CodePosServer {
     return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
   }
 
+  static inWindow(selector, x, y) {
+    const objects = Array.from(document.querySelectorAll(selector));
+    if (objects != null && objects.some((o) => CodePosServer.isInBounds(o, x, y)))
+      return true;
+    return false;
+  }
+
   static getFileRowCol(editor, x, y) {
     x /= window.devicePixelRatio;
     y /= window.devicePixelRatio;
 
-    const hovers = Array.from(document.querySelectorAll('.monaco-hover'));
-    if (hovers != null && hovers.some((h) => CodePosServer.isInBounds(h, x, y)))
+    if (inWindow('.monaco-hover', x, y)))
       return undefined;
-
-    const suggests = Array.from(document.querySelectorAll('.suggest-widget'));
-    if (suggests != null && suggests.some((s) => CodePosServer.isInBounds(s, x, y)))
+    if (inWindow('.quick-input-widget', x, y)))
       return undefined;
-
-    const suggestDetails = Array.from(document.querySelectorAll('.suggest-details-container'));
-    if (suggestDetails != null && suggestDetails.some((sd) => CodePosServer.isInBounds(sd, x, y)))
+    if (inWindow('.suggest-widget', x, y)))
+      return undefined;
+    if (inWindow('.suggest-details-container', x, y)))
       return undefined;
 
     const col = (x - editor.editorLeft) / editor.charWidth;
