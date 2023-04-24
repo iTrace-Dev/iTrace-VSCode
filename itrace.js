@@ -92,6 +92,8 @@ class CodePosServer {
 
     if (CodePosServer.inWindow('.monaco-hover', x, y)))
       return undefined;
+    if (CodePosServer.inWindow('.zone-widget', x, y)))
+      return undefined;
     if (CodePosServer.inWindow('.quick-input-widget', x, y)))
       return undefined;
     if (CodePosServer.inWindow('.suggest-widget', x, y)))
