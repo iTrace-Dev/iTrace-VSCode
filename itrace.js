@@ -90,15 +90,15 @@ class CodePosServer {
     x /= window.devicePixelRatio;
     y /= window.devicePixelRatio;
 
-    if (CodePosServer.inWindow('.monaco-hover', x, y)))
+    if (CodePosServer.inWindow('.monaco-hover', x, y))
       return undefined;
-    if (CodePosServer.inWindow('.zone-widget', x, y)))
+    if (CodePosServer.inWindow('.zone-widget', x, y))
       return undefined;
-    if (CodePosServer.inWindow('.quick-input-widget', x, y)))
+    if (CodePosServer.inWindow('.quick-input-widget', x, y))
       return undefined;
-    if (CodePosServer.inWindow('.suggest-widget', x, y)))
+    if (CodePosServer.inWindow('.suggest-widget', x, y))
       return undefined;
-    if (CodePosServer.inWindow('.suggest-details-container', x, y)))
+    if (CodePosServer.inWindow('.suggest-details-container', x, y))
       return undefined;
 
     const col = (x - editor.editorLeft) / editor.charWidth;
