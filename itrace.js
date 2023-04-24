@@ -86,7 +86,7 @@ class CodePosServer {
     x /= window.devicePixelRatio;
     y /= window.devicePixelRatio;
 
-    if (!CodePosServer.inWindow('.workbench.parts.editor', x, y))
+    if (!CodePosServer.inWindow('.part.editor', x, y))
       return { row: -1, col: -1, file: editor.openFile };
 
     if (CodePosServer.inWindow('.monaco-hover', x, y) ||
