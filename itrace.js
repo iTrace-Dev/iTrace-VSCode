@@ -72,10 +72,7 @@ class CodePosServer {
   }
 
   static isInBounds(obj, x, y) {
-    const rects = obj.getClientRects();
-    if (rects.length == 0)
-      return false;
-    const rect = rects[0];
+    const rect = obj.getBoundingClientRect();
     return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
   }
 
@@ -107,9 +104,9 @@ class CodePosServer {
     let zoneRows = 0;
     if (zones != null && zones.length > 0)
       zones.forEach((z) => {
-        const rect = z.getClientRects();
-        if (rect != null && y >= rect[0].top)
-        zoneRows = rect[0].height / editor.lineHeight;
+        const rect = z.getBoundingClientRect();
+        if (y >= rect.top)
+          zoneRows = rect[0].height / editor.lineHeight;
       });
 
     const col = (x - editor.editorLeft) / editor.charWidth;
