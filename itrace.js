@@ -153,7 +153,7 @@ function testCoords() {
   editorRegion.addEventListener("mousemove", (evnt) => {
     let editor = CodePosServer.getEditorAttributes();
     let pos = CodePosServer.getFileRowCol(editor, evnt.x, evnt.y);
-    console.log("<response"
+    console.log("<response "
                 + "x=\""
                 + evnt.x
                 + "\" y=\""
@@ -169,7 +169,7 @@ function testCoords() {
                 + "\" source_file_col=\""
                 + pos.col.toString()
                 + "\" editor_line_height=\""
-                + editor.lineHeight
+                + editor.lineHeight + "/>"
                 );
   });
 }
