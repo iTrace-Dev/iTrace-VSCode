@@ -17,7 +17,7 @@ The first option to use iTrace-VSCode is to load it directly into the DevTools c
 * Open the DevTools console window by going to Help->Toogle Developer Tools->Console
 * Paste the code into the console and press `Enter`
 
-If no errors appear in the console, you should be good to go. You may close the DevTools window or leave it open for debugging, and you can set iTrace-Core up and beging tracking when ready.
+If no errors appear in the console, you should be good to go. You may close the DevTools window or leave it open for debugging, and you can set iTrace-Core up and begin tracking when ready.
 
 ### Custom CSS and JS Loader
 The second option is to use a VSCode Extension, [Custom CSS and JS Loader](https://marketplace.visualstudio.com/items?itemName=be5invis.vscode-custom-css).  NOTE: This extension will modify the existing VSCode installation, meaning every time VSCode starts it will warn the installation is corrupt.
