@@ -63,7 +63,7 @@ class CodePosServer {
     const editorTop = editorBox.top;
     const lineHeight = lineNumberBox.height;
     const charWidth = lineBox.width / line.innerText.length;
-    const fontSize = window.getComputedStyle(line, null).getPropertyValue('font-size')
+    const fontSize = parseFloat(window.getComputedStyle(line, null).fontSize);
     let openFileTemp = editorRegion
       .querySelector(".monaco-editor")
       .getAttribute("data-uri").replace("file:///","").replace("%3A",":");
