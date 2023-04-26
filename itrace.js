@@ -5,13 +5,13 @@ class OutputFileWriter {
     this.file = fs.createWriteStream(directory + "\\itrace_vscode-" + (new Date()).getTime().toString() + ".xml");
     this.file.write("<?xml version=\"1.0\"?>\n");
     this.file.write("<itrace_plugin session_id=\"" + session_id + "\">\n");
-    this.file.write("    <environment screen_width=\"" + window.screen.width.toString() + "\" screen_height=\"" + window.screen.height.toString() + "\" plugin_type=\"VSCODE\">\n");
+    this.file.write("    <environment screen_width=\"" + window.screen.width.toString() + "\" screen_height=\"" + window.screen.height.toString() + "\" plugin_type=\"VSCODE\"/>\n");
     this.file.write("    <gazes>\n");
   }
 	
   close_writer() {
-    this.file.write("    <gazes/>\n");
-    this.file.write("<itrace_plugin/>\n");
+    this.file.write("    </gazes>\n");
+    this.file.write("</itrace_plugin>\n");
     this.file.end();
   }
 	
