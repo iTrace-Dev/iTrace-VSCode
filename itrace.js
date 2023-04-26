@@ -33,8 +33,8 @@ class OutputFileWriter {
                     + " source_file_col=\"" + pos.col.toString() + "\""
                     + " editor_line_height=\"" + editor.lineHeight + "\""
                     + " editor_font_height=\"" + editor.fontSize + "\""
-                    + " editor_line_base_x=\"\""
-                    + " editor_line_base_y=\"\""
+                    + " editor_line_base_x=\"" + pos.lineLeft + "\""
+                    + " editor_line_base_y=\"" + pos.lineTop + "\""
                     + "/>\n"
                    );
   }
@@ -98,6 +98,8 @@ class CodePosServer {
     let retValue = {
       row: -1,
       col: -1,
+      lineLeft: -1,
+      lineTop: -1,
       file: editor.openFile,
     };
 
@@ -133,6 +135,8 @@ class CodePosServer {
     if (pos.col < 0 || pos.row < 0) {
       pos.row = -1;
       pos.col = -1;
+      pos.lineLeft = -1;
+      pos.lineTop = -1;
       return pos;
     }
     let onLine = false;
@@ -145,13 +149,18 @@ class CodePosServer {
       }).forEach((l) => {
         onLine = true;
         const rowRect = l.firstChild.getBoundingClientRect();
-        if (x >= rowRect.left && x <= rowRect.right)
+        if (x >= rowRect.left && x <= rowRect.right) {
           onCol = true;
+          pos.lineLeft = rowRect.left;
+          pos.lineTop = rowRect.top;
+        }
       });
     }
     if (!onLine || !onCol) {
       pos.row = -1;
       pos.col = -1;
+      pos.lineLeft = -1;
+      pos.lineTop = -1;
     }
     return pos;
   }
@@ -201,6 +210,8 @@ function testCoords() {
                 + " source_file_col=\"" + pos.col.toString() + "\""
                 + " editor_line_height=\"" + editor.lineHeight + "\""
                 + " editor_font_height=\"" + editor.fontSize + "\""
+                + " editor_line_base_x=\"" + pos.lineLeft + "\""
+                + " editor_line_base_y=\"" + pos.lineTop + "\""
                 + "/>"
                 );
   });
