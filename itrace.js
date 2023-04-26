@@ -10,14 +10,14 @@ class OutputFileWriter {
     this.file.write("    <environment screen_width=\"" + window.screen.width.toString() + "\" screen_height=\"" + window.screen.height.toString() + "\" plugin_type=\"VSCODE\"/>\n");
     this.file.write("    <gazes>\n");
   }
-	
+
   close_writer() {
     this.file.write("    </gazes>\n");
     this.file.write("</itrace_plugin>\n");
     this.file.end();
     console.log("iTrace: session finished");
   }
-	
+
   write_gaze(event_id, x, y) {
     let editor = CodePosServer.getEditorAttributes();
     let pos = CodePosServer.getFileRowCol(editor, parseInt(x), parseInt(y));
