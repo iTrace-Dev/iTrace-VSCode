@@ -44,9 +44,18 @@ class OutputFileWriter {
 }
 
 class CodePosServer {
+  static noEditorOpen = {
+    openFile: "",
+    lineHeight: -1,
+  };
+
   static getEditorAttributes() {
     const editorRegion = document.getElementById("workbench.parts.editor");
+    if (!editorRegion)
+      return CodePosServer.noEditorOpen;
     const lineNumber = editorRegion.querySelector(".line-numbers");
+    if (!lineNumber)
+      return CodePosServer.noEditorOpen;
     const lineNumberBox = lineNumber.getBoundingClientRect();
     const editor = editorRegion.querySelector(".lines-content");
     const editorBox = editor.getBoundingClientRect();
@@ -86,7 +95,7 @@ class CodePosServer {
     x /= window.devicePixelRatio;
     y /= window.devicePixelRatio;
 
-    if (!CodePosServer.inWindow('.part.editor', x, y))
+    if (editor.openFile.length == 0 || !CodePosServer.inWindow('.part.editor', x, y))
       return { row: -1, col: -1, file: editor.openFile };
 
     if (CodePosServer.inWindow('.monaco-hover', x, y) ||
