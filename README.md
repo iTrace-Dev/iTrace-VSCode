@@ -3,6 +3,8 @@
 ## Using iTrace-VSCode
 There are two options to use iTrace-VSCode. VSCode's extension API does not provide access to the underlying DOM information, iTrace-VSCode must be loaded in as JavaScript into VSCode's DOM.
 
+Tested on VSCode Version: 1.77.3.
+
 ## Current Limitations/Assumptions
 Both options assume the VSCode window is maximized (or at the very least, positioned in the top-left corner of the screen).
 
