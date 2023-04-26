@@ -2,10 +2,10 @@ const fs = require('fs');
 
 class OutputFileWriter {
   constructor(directory,session_id) {
-    this.file = fs.createWriteStream(directory+"\\itrace_vscode-"+(new Date()).getTime().toString()+".xml");
+    this.file = fs.createWriteStream(directory + "\\itrace_vscode-" + (new Date()).getTime().toString() + ".xml");
     this.file.write("<?xml version=\"1.0\"?>\n");
-    this.file.write("<itrace_plugin session_id=\""+session_id+"\">\n");
-    this.file.write("    <environment screen_width=\""+window.screen.width.toString()+"\" screen_height=\""+window.screen.height.toString()+"\" plugin_type=\"VSCODE\">\n");
+    this.file.write("<itrace_plugin session_id=\"" + session_id + "\">\n");
+    this.file.write("    <environment screen_width=\"" + window.screen.width.toString() + "\" screen_height=\"" + window.screen.height.toString() + "\" plugin_type=\"VSCODE\">\n");
     this.file.write("    <gazes>\n");
   }
 	
@@ -86,7 +86,7 @@ class CodePosServer {
 
   static inWindow(selector, x, y) {
     const objects = Array.from(document.querySelectorAll(selector));
-    if (objects != null && objects.some((o) => CodePosServer.isInBounds(o, x, y)))
+    if (objects?.some((o) => CodePosServer.isInBounds(o, x, y)))
       return true;
     return false;
   }
@@ -95,52 +95,61 @@ class CodePosServer {
     x /= window.devicePixelRatio;
     y /= window.devicePixelRatio;
 
-    if (editor.openFile.length == 0 || !CodePosServer.inWindow('.part.editor', x, y))
-      return { row: -1, col: -1, file: editor.openFile };
+    let retValue = {
+      row: -1,
+      col: -1,
+      file: editor.openFile,
+    };
 
-    if (CodePosServer.inWindow('.monaco-hover', x, y) ||
-        CodePosServer.inWindow('.zone-widget', x, y) ||
-        CodePosServer.inWindow('.quick-input-widget', x, y) ||
-        CodePosServer.inWindow('.suggest-widget', x, y) ||
-        CodePosServer.inWindow('.suggest-details-container', x, y))
-      return { row: -1, col: -1, file: editor.openFile };
+    if (editor.openFile.length == 0 || !CodePosServer.inWindow('.part.editor', x, y))
+      return retValue;
+
+    if ([
+          '.monaco-hover',
+          '.zone-widget',
+          '.quick-input-widget',
+          '.suggest-widget',
+          '.suggest-details-container',
+        ].some((css) => CodePosServer.inWindow(css, x, y)))
+      return retValue;
 
     // zone widgets 'push' the editor lines down below them, so if we are
     // mapping a coord below them, subtract how many lines each one pushed
     const zones = Array.from(document.querySelectorAll('.zone-widget'));
     let zoneRows = 0;
-    if (zones != null && zones.length > 0)
-      zones.forEach((z) => {
-        const rect = z.getBoundingClientRect();
-        if (y >= rect.top)
+    if (zones?.length > 0)
+      zones
+        .filter((z) => y >= z.getBoundingClientRect().top)
+        .forEach((z) => {
           zoneRows = rect[0].height / editor.lineHeight;
-      });
+        });
 
-    const col = (x - editor.editorLeft) / editor.charWidth;
-    const row = (y - editor.editorTop) / editor.lineHeight;
-    return CodePosServer.clamp({
-      row: Math.floor(row - zoneRows + 1),
-      col: Math.floor(col + 1),
-      file: editor.openFile,
-    }, x, y);
+    retValue.row = Math.floor((y - editor.editorTop) / editor.lineHeight - zoneRows + 1);
+    retValue.col = Math.floor((x - editor.editorLeft) / editor.charWidth + 1);
+    return CodePosServer.clamp(retValue, x, y);
   }
 
   static clamp(pos, x, y) {
+    if (pos.col < 0 || pos.row < 0) {
+      pos.row = -1;
+      pos.col = -1;
+      return pos;
+    }
     let onLine = false;
     let onCol = false;
-    const objects = Array.from(document.querySelectorAll('.view-line'));
-    if (objects != null) {
-      objects.forEach((obj) => {
-        const rect = obj.getBoundingClientRect();
-        if (y >= rect.top && y <= rect.bottom) {
-          onLine = true;
-          const rowRect = obj.firstChild.getBoundingClientRect();
-          if (x >= rowRect.left && x <= rowRect.right)
-            onCol = true;
-        }
-      })
+    const lines = Array.from(document.querySelectorAll('.view-line'));
+    if (lines?.length > 0) {
+      lines.filter((l) => {
+        const rect = l.getBoundingClientRect();
+        return y >= rect.top && y <= rect.bottom;
+      }).forEach((l) => {
+        onLine = true;
+        const rowRect = l.firstChild.getBoundingClientRect();
+        if (x >= rowRect.left && x <= rowRect.right)
+          onCol = true;
+      });
     }
-    if (pos.col < 0 || pos.row < 0 || !onLine || !onCol) {
+    if (!onLine || !onCol) {
       pos.row = -1;
       pos.col = -1;
     }
