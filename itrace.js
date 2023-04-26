@@ -1,8 +1,10 @@
 const fs = require('fs');
 
 class OutputFileWriter {
-  constructor(directory,session_id) {
-    this.file = fs.createWriteStream(directory + "\\itrace_vscode-" + (new Date()).getTime().toString() + ".xml");
+  constructor(directory, session_id) {
+    const filename = directory + "\\itrace_vscode-" + (new Date()).getTime().toString() + ".xml";
+    console.log("iTrace: session started :: " + filename);
+    this.file = fs.createWriteStream(filename);
     this.file.write("<?xml version=\"1.0\"?>\n");
     this.file.write("<itrace_plugin session_id=\"" + session_id + "\">\n");
     this.file.write("    <environment screen_width=\"" + window.screen.width.toString() + "\" screen_height=\"" + window.screen.height.toString() + "\" plugin_type=\"VSCODE\"/>\n");
@@ -13,6 +15,7 @@ class OutputFileWriter {
     this.file.write("    </gazes>\n");
     this.file.write("</itrace_plugin>\n");
     this.file.end();
+    console.log("iTrace: session finished");
   }
 	
   write_gaze(event_id, x, y) {
@@ -156,11 +159,9 @@ class CodePosServer {
   coordsCallback(websocketEvent) {
     let data_arr = websocketEvent.data.trim().split(",");
     if (data_arr[0] == "session_end" || data_arr[0] == "session_stop") {
-      console.log("Done!");
       this.writer.close_writer();
     }
     else if (data_arr[0] == "session_start") {
-      console.log("Start!");
       this.writer = new OutputFileWriter(data_arr[3], data_arr[1]);
     }
     else if (data_arr[0] == "gaze") {
@@ -177,10 +178,10 @@ class CodePosServer {
     this.stop = () => this.ws.close();
     this.ws.addEventListener("error", (event) => {
       console.log("WebSocket error: ", event);
-      if (this.writer != null) this.writer.close_writer();
+      this.writer?.close_writer();
     });
     this.ws.addEventListener("close", (event) => {
-      if (this.writer != null) this.writer.close_writer();
+      this.writer?.close_writer();
     });
   }
 }
