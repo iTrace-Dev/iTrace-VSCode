@@ -38,7 +38,9 @@ class OutputFileWriter {
                     + pos.col.toString()
                     + "\" editor_line_height=\""
                     + editor.lineHeight
-                    + "\" editor_font_height=\"\" editor_line_base_x=\"\" editor_line_base_y=\"\"/>\n"
+                    + "\" editor_font_height=\""
+                    + editor.fontSize
+                    + "\" editor_line_base_x=\"\" editor_line_base_y=\"\"/>\n"
                    );
   }
 }
@@ -46,6 +48,7 @@ class OutputFileWriter {
 class CodePosServer {
   static noEditorOpen = {
     openFile: "",
+    fontSize: -1,
     lineHeight: -1,
   };
 
@@ -65,6 +68,7 @@ class CodePosServer {
     const editorTop = editorBox.top;
     const lineHeight = lineNumberBox.height;
     const charWidth = lineBox.width / line.innerText.length;
+    const fontSize = window.getComputedStyle(line, null).getPropertyValue('font-size')
     let openFileTemp = editorRegion
       .querySelector(".monaco-editor")
       .getAttribute("data-uri").replace("file:///","").replace("%3A",":");
@@ -73,6 +77,7 @@ class CodePosServer {
     return {
       editorLeft,
       charWidth,
+      fontSize,
       lineHeight,
       editorTop,
       openFile,
@@ -209,7 +214,9 @@ function testCoords() {
                 + "\" source_file_col=\""
                 + pos.col.toString()
                 + "\" editor_line_height=\""
-                + editor.lineHeight + "/>"
+                + editor.lineHeight
+                + "\" editor_font_height=\""
+                + editor.fontSize + "\"/>"
                 );
   });
 }
