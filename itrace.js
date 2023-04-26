@@ -18,29 +18,21 @@ class OutputFileWriter {
   write_gaze(event_id, x, y) {
     let editor = CodePosServer.getEditorAttributes();
     let pos = CodePosServer.getFileRowCol(editor, parseInt(x), parseInt(y));
-    this.file.write("        <response event_id=\""
-                    + event_id
-                    + "\" plugin_time=\""
-                    + (new Date()).getTime().toString()
-                    + "\" x=\""
-                    + x
-                    + "\" y=\""
-                    + y
-                    + "\" gaze_target=\""
-                    + editor.openFile.split("\\").at(-1)
-                    + "\" gaze_target_type=\""
-                    + editor.openFile.split(".").at(-1)
-                    + "\" source_file_path=\""
-                    + editor.openFile
-                    + "\" source_file_line=\""
-                    + pos.row.toString()
-                    + "\" source_file_col=\""
-                    + pos.col.toString()
-                    + "\" editor_line_height=\""
-                    + editor.lineHeight
-                    + "\" editor_font_height=\""
-                    + editor.fontSize
-                    + "\" editor_line_base_x=\"\" editor_line_base_y=\"\"/>\n"
+    this.file.write("        <response"
+                    + " event_id=\"" + event_id + "\""
+                    + " plugin_time=\"" + (new Date()).getTime().toString() + "\""
+                    + " x=\"" + x + "\""
+                    + " y=\"" + y + "\""
+                    + " gaze_target=\"" + editor.openFile.split("\\").at(-1) + "\""
+                    + " gaze_target_type=\"" + editor.openFile.split(".").at(-1) + "\""
+                    + " source_file_path=\"" + editor.openFile + "\""
+                    + " source_file_line=\"" + pos.row.toString() + "\""
+                    + " source_file_col=\"" + pos.col.toString() + "\""
+                    + " editor_line_height=\"" + editor.lineHeight + "\""
+                    + " editor_font_height=\"" + editor.fontSize + "\""
+                    + " editor_line_base_x=\"\""
+                    + " editor_line_base_y=\"\""
+                    + "/>\n"
                    );
   }
 }
@@ -198,25 +190,17 @@ function testCoords() {
   editorRegion.addEventListener("mousemove", (evnt) => {
     let editor = CodePosServer.getEditorAttributes();
     let pos = CodePosServer.getFileRowCol(editor, evnt.x, evnt.y);
-    console.log("<response "
-                + "x=\""
-                + evnt.x
-                + "\" y=\""
-                + evnt.y
-                + "\" gaze_target=\""
-                + editor.openFile.split("\\").at(-1)
-                + "\" gaze_target_type=\""
-                + editor.openFile.split(".").at(-1)
-                + "\" source_file_path=\""
-                + editor.openFile
-                + "\" source_file_line=\""
-                + pos.row.toString()
-                + "\" source_file_col=\""
-                + pos.col.toString()
-                + "\" editor_line_height=\""
-                + editor.lineHeight
-                + "\" editor_font_height=\""
-                + editor.fontSize + "\"/>"
+    console.log("<response"
+                + " x=\"" + evnt.x + "\""
+                + " y=\"" + evnt.y + "\""
+                + " gaze_target=\"" + editor.openFile.split("\\").at(-1) + "\""
+                + " gaze_target_type=\"" + editor.openFile.split(".").at(-1) + "\""
+                + " source_file_path=\"" + editor.openFile + "\""
+                + " source_file_line=\"" + pos.row.toString() + "\""
+                + " source_file_col=\"" + pos.col.toString() + "\""
+                + " editor_line_height=\"" + editor.lineHeight + "\""
+                + " editor_font_height=\"" + editor.fontSize + "\""
+                + "/>"
                 );
   });
 }
