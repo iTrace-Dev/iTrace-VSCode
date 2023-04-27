@@ -79,14 +79,12 @@ class CodePosServer {
     };
   }
 
-  static isInBounds(obj, x, y) {
-    const rect = obj.getBoundingClientRect();
-    return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
-  }
-
   static inWindow(selector, x, y) {
     const objects = Array.from(document.querySelectorAll(selector));
-    if (objects?.some((o) => CodePosServer.isInBounds(o, x, y)))
+    if (objects?.some((o) => {
+          const rect = o.getBoundingClientRect();
+          return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
+        }))
       return true;
     return false;
   }
@@ -106,27 +104,26 @@ class CodePosServer {
     if (editor.openFile.length == 0 || !CodePosServer.inWindow('.part.editor', x, y))
       return retValue;
 
-    if ([
-          '.monaco-hover',
-          '.zone-widget',
-          '.quick-input-widget',
-          '.suggest-widget',
-          '.suggest-details-container',
-        ].some((css) => CodePosServer.inWindow(css, x, y)))
+    if (CodePosServer.inWindow(
+          '.monaco-hover, '
+          + '.zone-widget, '
+          + '.codelens-decoration, '
+          + '.quick-input-widget, '
+          + '.suggest-widget, '
+          + '.suggest-details-container'
+          , x, y))
       return retValue;
 
     // zone widgets 'push' the editor lines down below them, so if we are
     // mapping a coord below them, subtract how many lines each one pushed
-    const zones = Array.from(document.querySelectorAll('.zone-widget'));
-    let zoneRows = 0;
-    if (zones?.length > 0)
-      zones
-        .filter((z) => y >= z.getBoundingClientRect().top)
-        .forEach((z) => {
-          zoneRows = rect[0].height / editor.lineHeight;
-        });
+    let widgetOffset = 0;
+    Array.from(document.querySelectorAll('.zone-widget'))
+      .filter((z) => y >= z.getBoundingClientRect().top)
+      .forEach((z) => {
+        widgetOffset += z.getBoundingClientRect().height;
+      });
 
-    retValue.row = Math.floor((y - editor.editorTop) / editor.lineHeight - zoneRows + 1);
+    retValue.row = Math.floor((y - editor.editorTop - widgetOffset) / editor.lineHeight + 1);
     retValue.col = Math.floor((x - editor.editorLeft) / editor.charWidth + 1);
     return CodePosServer.clamp(retValue, x, y);
   }
