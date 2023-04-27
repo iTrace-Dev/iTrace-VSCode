@@ -19,8 +19,7 @@ class OutputFileWriter {
   }
 
   write_gaze(event_id, x, y) {
-    let editor = CodePosServer.getEditorAttributes(x, y);
-    let pos = CodePosServer.getFileRowCol(editor, x, y);
+    let { editor, pos } = CodePosServer.getFileRowCol(x, y);
     this.file.write("        <response"
                     + " event_id=\"" + event_id + "\""
                     + " plugin_time=\"" + (new Date()).getTime().toString() + "\""
@@ -33,48 +32,84 @@ class OutputFileWriter {
                     + " source_file_col=\"" + pos.col.toString() + "\""
                     + " editor_line_height=\"" + editor.lineHeight + "\""
                     + " editor_font_height=\"" + editor.fontSize + "\""
-                    + " editor_line_base_x=\"" + pos.lineLeft + "\""
-                    + " editor_line_base_y=\"" + pos.lineTop + "\""
+                    + " editor_line_base_x=\"" + editor.lineLeft + "\""
+                    + " editor_line_base_y=\"" + editor.lineTop + "\""
                     + "/>\n"
                    );
   }
 }
 
+const noEditorOpen = {
+  lineLeft: -1,
+  lineTop: -1,
+  lineHeight: -1,
+  fontSize: -1,
+  openFile: "",
+};
+
 class CodePosServer {
-  static noEditorOpen = {
-    openFile: "",
-    fontSize: -1,
-    lineHeight: -1,
-  };
+  static editorRegion = undefined;
 
   static getEditorAttributes(x, y) {
-    const editorRegion = document.getElementById("workbench.parts.editor");
-    if (!editorRegion)
-      return CodePosServer.noEditorOpen;
-    const lineNumber = editorRegion.querySelector(".line-numbers");
-    if (!lineNumber)
-      return CodePosServer.noEditorOpen;
-    const lineNumberBox = lineNumber.getBoundingClientRect();
-    const editor = editorRegion.querySelector(".lines-content");
+    if (CodePosServer.editorRegion === undefined) {
+      CodePosServer.editorRegion = document.getElementById("workbench.parts.editor");
+    }
+    if (CodePosServer.editorRegion === null) {
+      CodePosServer.editorRegion = undefined;
+      return noEditorOpen;
+    }
+
+    const lineNumbers = CodePosServer.editorRegion.querySelector(".line-numbers");
+    if (!lineNumbers)
+      return noEditorOpen;
+    const lineHeight = lineNumbers.getBoundingClientRect().height;
+
+    const editor = CodePosServer.editorRegion.querySelector(".lines-content");
     const editorBox = editor.getBoundingClientRect();
-    const line = editor.querySelector(".view-line").firstChild;
-    const lineBox = line.getBoundingClientRect();
     const editorLeft = editorBox.left;
     const editorTop = editorBox.top;
-    const lineHeight = lineNumberBox.height;
-    const charWidth = lineBox.width / line.innerText.length;
-    const fontSize = parseFloat(window.getComputedStyle(line, null).fontSize);
-    let openFileTemp = editorRegion
+
+    let line = undefined;
+    let lineLeft = -1;
+    let lineTop = -1;
+    const lines = Array.from(document.querySelectorAll(".view-line"));
+    if (lines?.length > 0) {
+      lines.filter((l) => {
+        const rect = l.getBoundingClientRect();
+        return y >= rect.top && y <= rect.bottom;
+      }).forEach((l) => {
+        const rowRect = l.firstChild.getBoundingClientRect();
+        if (x >= rowRect.left && x <= rowRect.right) {
+          line = l.firstChild;
+          lineLeft = rowRect.left;
+          lineTop = rowRect.top;
+        }
+      });
+    }
+
+    let charWidth = -1;
+    let fontSize = -1;
+    if (line) {
+      const lineBox = line.getBoundingClientRect();
+      charWidth = lineBox.width / line.innerText.length;
+      fontSize = parseFloat(window.getComputedStyle(line, null).fontSize);
+    }
+
+    let openFileTemp = CodePosServer.editorRegion
       .querySelector(".monaco-editor")
       .getAttribute("data-uri").replace("file:///","").replace("%3A",":");
     const openFile = openFileTemp[0].toUpperCase() + openFileTemp.slice(1);
+
     // these could be cached and only updated when a MutationObserver fires
     return {
       editorLeft,
-      charWidth,
-      fontSize,
-      lineHeight,
       editorTop,
+      line,
+      lineLeft,
+      lineTop,
+      charWidth,
+      lineHeight,
+      fontSize,
       openFile,
     };
   }
@@ -89,20 +124,19 @@ class CodePosServer {
     return false;
   }
 
-  static getFileRowCol(editor, x, y) {
+  static getFileRowCol(x, y) {
     x /= window.devicePixelRatio;
     y /= window.devicePixelRatio;
 
-    let retValue = {
+    const editor = CodePosServer.getEditorAttributes(x, y);
+
+    const pos = {
       row: -1,
       col: -1,
-      lineLeft: -1,
-      lineTop: -1,
-      file: editor.openFile,
     };
 
     if (editor.openFile.length == 0 || !CodePosServer.inWindow(".part.editor", x, y))
-      return retValue;
+      return { editor, pos };
 
     if (CodePosServer.inWindow(
           ".monaco-hover, "
@@ -112,7 +146,7 @@ class CodePosServer {
           + ".suggest-widget, "
           + ".suggest-details-container"
           , x, y))
-      return retValue;
+      return { editor, pos };
 
     // zone widgets "push" the editor lines down below them, so if we are
     // mapping a coord below them, subtract how many lines each one pushed
@@ -128,37 +162,13 @@ class CodePosServer {
         widgetOffset += parseFloat(window.getComputedStyle(z, null).lineHeight);
       });
 
-    retValue.row = Math.floor((y - editor.editorTop - widgetOffset) / editor.lineHeight + 1);
-    retValue.col = Math.floor((x - editor.editorLeft) / editor.charWidth + 1);
-    return CodePosServer.clamp(retValue, x, y);
+    pos.row = Math.floor((y - editor.editorTop - widgetOffset) / editor.lineHeight + 1);
+    pos.col = Math.floor((x - editor.editorLeft) / editor.charWidth + 1);
+    return { editor: editor, pos: CodePosServer.clamp(editor, pos) };
   }
 
-  static clamp(pos, x, y) {
-    if (pos.col < 0 || pos.row < 0) {
-      pos.row = -1;
-      pos.col = -1;
-      pos.lineLeft = -1;
-      pos.lineTop = -1;
-      return pos;
-    }
-    let onLine = false;
-    let onCol = false;
-    const lines = Array.from(document.querySelectorAll(".view-line"));
-    if (lines?.length > 0) {
-      lines.filter((l) => {
-        const rect = l.getBoundingClientRect();
-        return y >= rect.top && y <= rect.bottom;
-      }).forEach((l) => {
-        onLine = true;
-        const rowRect = l.firstChild.getBoundingClientRect();
-        if (x >= rowRect.left && x <= rowRect.right) {
-          onCol = true;
-          pos.lineLeft = rowRect.left;
-          pos.lineTop = rowRect.top;
-        }
-      });
-    }
-    if (!onLine || !onCol) {
+  static clamp(editor, pos) {
+    if (pos.col < 0 || pos.row < 0 || !editor.line) {
       pos.row = -1;
       pos.col = -1;
       pos.lineLeft = -1;
@@ -198,10 +208,8 @@ class CodePosServer {
 }
 
 function testCoords() {
-  const editorRegion = document.getElementsByTagName("body")[0];
-  editorRegion.addEventListener("mousemove", (evnt) => {
-    let editor = CodePosServer.getEditorAttributes(evnt.x, evnt.y);
-    let pos = CodePosServer.getFileRowCol(editor, evnt.x, evnt.y);
+  document.getElementsByTagName("body")[0].addEventListener("mousemove", (evnt) => {
+    let { editor, pos } = CodePosServer.getFileRowCol(evnt.x, evnt.y);
     console.log("<response"
                 + " x=\"" + evnt.x + "\""
                 + " y=\"" + evnt.y + "\""
@@ -212,8 +220,8 @@ function testCoords() {
                 + " source_file_col=\"" + pos.col.toString() + "\""
                 + " editor_line_height=\"" + editor.lineHeight + "\""
                 + " editor_font_height=\"" + editor.fontSize + "\""
-                + " editor_line_base_x=\"" + pos.lineLeft + "\""
-                + " editor_line_base_y=\"" + pos.lineTop + "\""
+                + " editor_line_base_x=\"" + editor.lineLeft + "\""
+                + " editor_line_base_y=\"" + editor.lineTop + "\""
                 + "/>"
                 );
   });
