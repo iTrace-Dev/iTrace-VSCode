@@ -122,6 +122,11 @@ class CodePosServer {
       .forEach((z) => {
         widgetOffset += z.getBoundingClientRect().height;
       });
+    Array.from(document.querySelectorAll('.codelens-decoration'))
+      .filter((z) => y >= z.getBoundingClientRect().top)
+      .forEach((z) => {
+        widgetOffset += parseFloat(window.getComputedStyle(z, null).lineHeight);
+      });
 
     retValue.row = Math.floor((y - editor.editorTop - widgetOffset) / editor.lineHeight + 1);
     retValue.col = Math.floor((x - editor.editorLeft) / editor.charWidth + 1);
