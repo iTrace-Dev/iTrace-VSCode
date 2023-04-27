@@ -1,4 +1,4 @@
-const fs = require('fs');
+const fs = require("fs");
 
 class OutputFileWriter {
   constructor(directory, session_id) {
@@ -19,8 +19,8 @@ class OutputFileWriter {
   }
 
   write_gaze(event_id, x, y) {
-    let editor = CodePosServer.getEditorAttributes();
-    let pos = CodePosServer.getFileRowCol(editor, parseInt(x), parseInt(y));
+    let editor = CodePosServer.getEditorAttributes(x, y);
+    let pos = CodePosServer.getFileRowCol(editor, x, y);
     this.file.write("        <response"
                     + " event_id=\"" + event_id + "\""
                     + " plugin_time=\"" + (new Date()).getTime().toString() + "\""
@@ -47,7 +47,7 @@ class CodePosServer {
     lineHeight: -1,
   };
 
-  static getEditorAttributes() {
+  static getEditorAttributes(x, y) {
     const editorRegion = document.getElementById("workbench.parts.editor");
     if (!editorRegion)
       return CodePosServer.noEditorOpen;
@@ -101,28 +101,28 @@ class CodePosServer {
       file: editor.openFile,
     };
 
-    if (editor.openFile.length == 0 || !CodePosServer.inWindow('.part.editor', x, y))
+    if (editor.openFile.length == 0 || !CodePosServer.inWindow(".part.editor", x, y))
       return retValue;
 
     if (CodePosServer.inWindow(
-          '.monaco-hover, '
-          + '.zone-widget, '
-          + '.codelens-decoration, '
-          + '.quick-input-widget, '
-          + '.suggest-widget, '
-          + '.suggest-details-container'
+          ".monaco-hover, "
+          + ".zone-widget, "
+          + ".codelens-decoration, "
+          + ".quick-input-widget, "
+          + ".suggest-widget, "
+          + ".suggest-details-container"
           , x, y))
       return retValue;
 
-    // zone widgets 'push' the editor lines down below them, so if we are
+    // zone widgets "push" the editor lines down below them, so if we are
     // mapping a coord below them, subtract how many lines each one pushed
     let widgetOffset = 0;
-    Array.from(document.querySelectorAll('.zone-widget'))
+    Array.from(document.querySelectorAll(".zone-widget"))
       .filter((z) => y >= z.getBoundingClientRect().top)
       .forEach((z) => {
         widgetOffset += z.getBoundingClientRect().height;
       });
-    Array.from(document.querySelectorAll('.codelens-decoration'))
+    Array.from(document.querySelectorAll(".codelens-decoration"))
       .filter((z) => y >= z.getBoundingClientRect().top)
       .forEach((z) => {
         widgetOffset += parseFloat(window.getComputedStyle(z, null).lineHeight);
@@ -143,7 +143,7 @@ class CodePosServer {
     }
     let onLine = false;
     let onCol = false;
-    const lines = Array.from(document.querySelectorAll('.view-line'));
+    const lines = Array.from(document.querySelectorAll(".view-line"));
     if (lines?.length > 0) {
       lines.filter((l) => {
         const rect = l.getBoundingClientRect();
@@ -176,7 +176,7 @@ class CodePosServer {
       this.writer = new OutputFileWriter(data_arr[3], data_arr[1]);
     }
     else if (data_arr[0] == "gaze") {
-      this.writer.write_gaze(data_arr[1], data_arr[2], data_arr[3]);
+      this.writer.write_gaze(data_arr[1], parseInt(data_arr[2]), parseInt(data_arr[3]));
     }
     else {
       console.log("Unsupported message: " + websocketEvent.data);
@@ -200,7 +200,7 @@ class CodePosServer {
 function testCoords() {
   const editorRegion = document.getElementsByTagName("body")[0];
   editorRegion.addEventListener("mousemove", (evnt) => {
-    let editor = CodePosServer.getEditorAttributes();
+    let editor = CodePosServer.getEditorAttributes(evnt.x, evnt.y);
     let pos = CodePosServer.getFileRowCol(editor, evnt.x, evnt.y);
     console.log("<response"
                 + " x=\"" + evnt.x + "\""
