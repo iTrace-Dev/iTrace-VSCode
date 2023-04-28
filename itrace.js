@@ -158,6 +158,7 @@ class CodePosServer {
     if (CodePosServer.inWindow(
           ".monaco-hover, "
           + ".zone-widget, "
+          + ".lightBulbWidget, "
           + ".codelens-decoration, "
           + ".quick-input-widget, "
           + ".suggest-widget, "
