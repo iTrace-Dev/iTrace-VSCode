@@ -59,17 +59,16 @@ class CodePosServer {
       return noEditorOpen;
     }
 
-    const lineNumbers = CodePosServer.editorRegion.querySelector(".line-numbers");
-    if (!lineNumbers)
+    const lineNumbers = Array.from(CodePosServer.editorRegion.querySelectorAll(".line-numbers"));
+    if (!lineNumbers?.length)
       return noEditorOpen;
-    const lineHeight = lineNumbers.getBoundingClientRect().height;
 
     const editor = CodePosServer.editorRegion.querySelector(".lines-content");
     const editorBox = editor.getBoundingClientRect();
     const editorLeft = editorBox.left;
-    const editorTop = editorBox.top;
 
     let line = undefined;
+    let lineHeight = -1;
     let lineLeft = -1;
     let lineTop = -1;
     const lines = Array.from(document.querySelectorAll(".view-line"));
@@ -81,11 +80,24 @@ class CodePosServer {
         const rowRect = l.firstChild.getBoundingClientRect();
         if (x >= rowRect.left && x <= rowRect.right) {
           line = l.firstChild;
+          lineHeight = l.getBoundingClientRect().height;
           lineLeft = rowRect.left;
           lineTop = rowRect.top;
         }
       });
     }
+
+    let lineNum = -1;
+    let lineNumRect = undefined;
+    lineNumbers
+      .filter((l) => y >= l.getBoundingClientRect().top)
+      .forEach((l) => {
+        const num = parseInt(l.innerText);
+        if (num > lineNum) {
+            lineNum = num;
+            lineNumRect = l.getBoundingClientRect();
+        }
+      });
 
     let charWidth = -1;
     let fontSize = -1;
@@ -93,6 +105,38 @@ class CodePosServer {
       const lineBox = line.getBoundingClientRect();
       charWidth = lineBox.width / line.innerText.length;
       fontSize = parseFloat(window.getComputedStyle(line, null).fontSize);
+    }
+
+    let lineCol = 1;
+    if (lineNumRect && lines?.length > 0) {
+      const lineSpan = lines.filter((l) => {
+        const rect = l.getBoundingClientRect();
+        return rect.top <= y && rect.top >= lineNumRect.top;
+      });
+      let overGap = false;
+      lineSpan.forEach((l) => {
+          const rowRect = l.firstChild.getBoundingClientRect();
+          let totalLength = 0;
+          let lineLength = 0;
+          if (l.firstChild.firstChild.classList.length == 0) {
+            const rect = l.firstChild.firstChild.getBoundingClientRect();
+            const lineRect = l.getBoundingClientRect();
+            if (x >= rect.left && x <= rect.right && y >= lineRect.top && y <= lineRect.bottom)
+                overGap = true;
+            lineLength = Math.floor((x - editorLeft - (rect.right - rect.left)) / charWidth);
+            totalLength = Math.floor((rowRect.right - editorLeft - (rect.right - rect.left)) / charWidth);
+          } else {
+            lineLength  = Math.floor((x - editorLeft) / charWidth);
+            totalLength = Math.floor((rowRect.right - editorLeft) / charWidth);
+          }
+
+          if (y >= rowRect.top && y <= rowRect.bottom) {
+            lineCol += lineLength;
+          } else {
+            lineCol += totalLength;
+          }
+      });
+      if (overGap || lineCol <= 1) lineCol = -1;
     }
 
     let openFileTemp = CodePosServer.editorRegion
@@ -103,8 +147,9 @@ class CodePosServer {
     // these could be cached and only updated when a MutationObserver fires
     return {
       editorLeft,
-      editorTop,
       line,
+      lineNum,
+      lineCol,
       lineLeft,
       lineTop,
       charWidth,
@@ -148,27 +193,13 @@ class CodePosServer {
           , x, y))
       return { editor, pos };
 
-    // zone widgets "push" the editor lines down below them, so if we are
-    // mapping a coord below them, subtract how many lines each one pushed
-    let widgetOffset = 0;
-    Array.from(document.querySelectorAll(".zone-widget"))
-      .filter((z) => y >= z.getBoundingClientRect().top)
-      .forEach((z) => {
-        widgetOffset += z.getBoundingClientRect().height;
-      });
-    Array.from(document.querySelectorAll(".codelens-decoration"))
-      .filter((z) => y >= z.getBoundingClientRect().top)
-      .forEach((z) => {
-        widgetOffset += parseFloat(window.getComputedStyle(z, null).lineHeight);
-      });
-
-    pos.row = Math.floor((y - editor.editorTop - widgetOffset) / editor.lineHeight + 1);
-    pos.col = Math.floor((x - editor.editorLeft) / editor.charWidth + 1);
+    pos.row = editor.lineNum;
+    pos.col = editor.lineCol;
     return { editor: editor, pos: CodePosServer.clamp(editor, pos) };
   }
 
   static clamp(editor, pos) {
-    if (pos.col < 0 || pos.row < 0 || !editor.line) {
+    if (pos.col < 1 || pos.row < 1 || !editor.line) {
       pos.row = -1;
       pos.col = -1;
       pos.lineLeft = -1;
@@ -181,14 +212,11 @@ class CodePosServer {
     let data_arr = websocketEvent.data.trim().split(",");
     if (data_arr[0] == "session_end" || data_arr[0] == "session_stop") {
       this.writer.close_writer();
-    }
-    else if (data_arr[0] == "session_start") {
+    } else if (data_arr[0] == "session_start") {
       this.writer = new OutputFileWriter(data_arr[3], data_arr[1]);
-    }
-    else if (data_arr[0] == "gaze") {
+    } else if (data_arr[0] == "gaze") {
       this.writer.write_gaze(data_arr[1], parseInt(data_arr[2]), parseInt(data_arr[3]));
-    }
-    else {
+    } else {
       console.log("Unsupported message: " + websocketEvent.data);
     }
   }
