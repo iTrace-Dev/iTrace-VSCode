@@ -19,7 +19,7 @@ class OutputFileWriter {
   }
 
   write_gaze(event_id, x, y) {
-    let { editor, pos } = CodePosServer.getFileRowCol(x, y);
+    let pos = CodePosServer.getFileRowCol(x, y);
     this.file.write("        <response"
                     + " event_id=\"" + event_id + "\""
                     + " plugin_time=\"" + (new Date()).getTime().toString() + "\""
@@ -28,8 +28,8 @@ class OutputFileWriter {
                     + " gaze_target=\"" + editor.openFile.split(/[\\/]/).at(-1) + "\""
                     + " gaze_target_type=\"" + editor.openFile.split(".").at(-1) + "\""
                     + " source_file_path=\"" + editor.openFile + "\""
-                    + " source_file_line=\"" + pos.row.toString() + "\""
-                    + " source_file_col=\"" + pos.col.toString() + "\""
+                    + " source_file_line=\"" + editor.lineNum.toString() + "\""
+                    + " source_file_col=\"" + editor.lienCol.toString() + "\""
                     + " editor_line_height=\"" + editor.lineHeight + "\""
                     + " editor_font_height=\"" + editor.fontSize + "\""
                     + " editor_line_base_x=\"" + editor.lineLeft + "\""
@@ -40,8 +40,12 @@ class OutputFileWriter {
 }
 
 const noEditorOpen = {
+  line: undefined,
+  lineNum: -1,
+  lineCol: -1,
   lineLeft: -1,
   lineTop: -1,
+  charWidth: -1,
   lineHeight: -1,
   fontSize: -1,
   openFile: "",
@@ -50,7 +54,7 @@ const noEditorOpen = {
 class CodePosServer {
   static editorRegion = undefined;
 
-  static getEditorAttributes(x, y) {
+  static getFileRowCol(x, y) {
     if (CodePosServer.editorRegion === undefined) {
       CodePosServer.editorRegion = document.getElementById("workbench.parts.editor");
     }
@@ -60,8 +64,12 @@ class CodePosServer {
     }
 
     const lineNumbers = Array.from(CodePosServer.editorRegion.querySelectorAll(".line-numbers"));
-    if (!lineNumbers?.length)
+    if (!lineNumbers?.length) {
       return noEditorOpen;
+    }
+
+    x /= window.devicePixelRatio;
+    y /= window.devicePixelRatio;
 
     const editor = CodePosServer.editorRegion.querySelector(".lines-content");
     const editorBox = editor.getBoundingClientRect();
@@ -121,8 +129,9 @@ class CodePosServer {
           if (l.firstChild.firstChild.classList.length == 0) {
             const rect = l.firstChild.firstChild.getBoundingClientRect();
             const lineRect = l.getBoundingClientRect();
-            if (x >= rect.left && x <= rect.right && y >= lineRect.top && y <= lineRect.bottom)
+            if (x >= rect.left && x <= rect.right && y >= lineRect.top && y <= lineRect.bottom) {
                 overGap = true;
+            }
             lineLength = Math.floor((x - editorLeft - (rect.right - rect.left)) / charWidth);
             totalLength = Math.floor((rowRect.right - editorLeft - (rect.right - rect.left)) / charWidth);
           } else {
@@ -136,13 +145,32 @@ class CodePosServer {
             lineCol += totalLength;
           }
       });
-      if (overGap || lineCol <= 1) lineCol = -1;
+      if (overGap || lineCol <= 1) {
+        lineCol = -1;
+      }
     }
 
     let openFileTemp = CodePosServer.editorRegion
       .querySelector(".monaco-editor")
       .getAttribute("data-uri").replace("file:///","").replace("%3A",":");
     const openFile = openFileTemp[0].toUpperCase() + openFileTemp.slice(1);
+
+    if (CodePosServer.inWindow(
+          ".monaco-hover, "
+          + ".zone-widget, "
+          + ".codelens-decoration, "
+          + ".quick-input-widget, "
+          + ".suggest-widget, "
+          + ".suggest-details-container"
+          , x, y)
+        || openFile.length == 0
+        || !CodePosServer.inWindow(".part.editor", x, y)
+        || !line || lineNum < 1 || lineCol < 1) {
+      lineNum = -1;
+      lineCol = -1;
+      lineLeft = -1;
+      lineTop = -1;
+    }
 
     // these could be cached and only updated when a MutationObserver fires
     return {
@@ -161,51 +189,10 @@ class CodePosServer {
 
   static inWindow(selector, x, y) {
     const objects = Array.from(document.querySelectorAll(selector));
-    if (objects?.some((o) => {
+    return objects?.some((o) => {
           const rect = o.getBoundingClientRect();
           return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
-        }))
-      return true;
-    return false;
-  }
-
-  static getFileRowCol(x, y) {
-    x /= window.devicePixelRatio;
-    y /= window.devicePixelRatio;
-
-    const editor = CodePosServer.getEditorAttributes(x, y);
-
-    const pos = {
-      row: -1,
-      col: -1,
-    };
-
-    if (editor.openFile.length == 0 || !CodePosServer.inWindow(".part.editor", x, y))
-      return { editor, pos };
-
-    if (CodePosServer.inWindow(
-          ".monaco-hover, "
-          + ".zone-widget, "
-          + ".codelens-decoration, "
-          + ".quick-input-widget, "
-          + ".suggest-widget, "
-          + ".suggest-details-container"
-          , x, y))
-      return { editor, pos };
-
-    pos.row = editor.lineNum;
-    pos.col = editor.lineCol;
-    return { editor: editor, pos: CodePosServer.clamp(editor, pos) };
-  }
-
-  static clamp(editor, pos) {
-    if (pos.col < 1 || pos.row < 1 || !editor.line) {
-      pos.row = -1;
-      pos.col = -1;
-      pos.lineLeft = -1;
-      pos.lineTop = -1;
-    }
-    return pos;
+        });
   }
 
   coordsCallback(websocketEvent) {
@@ -237,15 +224,15 @@ class CodePosServer {
 
 function testCoords() {
   document.getElementsByTagName("body")[0].addEventListener("mousemove", (evnt) => {
-    let { editor, pos } = CodePosServer.getFileRowCol(evnt.x, evnt.y);
+    let editor = CodePosServer.getFileRowCol(evnt.x, evnt.y);
     console.log("<response"
                 + " x=\"" + evnt.x + "\""
                 + " y=\"" + evnt.y + "\""
                 + " gaze_target=\"" + editor.openFile.split(/[\\/]/).at(-1) + "\""
                 + " gaze_target_type=\"" + editor.openFile.split(".").at(-1) + "\""
                 + " source_file_path=\"" + editor.openFile + "\""
-                + " source_file_line=\"" + pos.row.toString() + "\""
-                + " source_file_col=\"" + pos.col.toString() + "\""
+                + " source_file_line=\"" + editor.lineNum.toString() + "\""
+                + " source_file_col=\"" + editor.lineCol.toString() + "\""
                 + " editor_line_height=\"" + editor.lineHeight + "\""
                 + " editor_font_height=\"" + editor.fontSize + "\""
                 + " editor_line_base_x=\"" + editor.lineLeft + "\""
