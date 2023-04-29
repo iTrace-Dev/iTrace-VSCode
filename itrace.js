@@ -29,7 +29,7 @@ class OutputFileWriter {
                     + " gaze_target_type=\"" + editor.openFile.split(".").at(-1) + "\""
                     + " source_file_path=\"" + editor.openFile + "\""
                     + " source_file_line=\"" + editor.lineNum.toString() + "\""
-                    + " source_file_col=\"" + editor.lienCol.toString() + "\""
+                    + " source_file_col=\"" + editor.lineCol.toString() + "\""
                     + " editor_line_height=\"" + editor.lineHeight + "\""
                     + " editor_font_height=\"" + editor.fontSize + "\""
                     + " editor_line_base_x=\"" + editor.lineLeft + "\""
@@ -212,9 +212,18 @@ class CodePosServer {
   }
 
   constructor() {
+    this.restart();
+  }
+
+  restart() {
     this.ws = new WebSocket("ws://127.0.0.1:7007");
     this.ws.addEventListener("message", (evt) => this.coordsCallback(evt));
-    this.stop = () => this.ws.close();
+    this.stop = () => {
+      if (this.ws) {
+        this.ws.close();
+        this.ws = undefined;
+      }
+    };
     this.ws.addEventListener("error", (event) => {
       console.log("WebSocket error: ", event);
       this.writer?.close_writer();
