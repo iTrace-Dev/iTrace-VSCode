@@ -19,7 +19,7 @@ class OutputFileWriter {
   }
 
   write_gaze(event_id, x, y) {
-    let pos = CodePosServer.getFileRowCol(x, y);
+    let pos = CodePosServer.getFileRowCol(x, y, true);
     this.file.write("        <response"
                     + " event_id=\"" + event_id + "\""
                     + " plugin_time=\"" + (new Date()).getTime().toString() + "\""
@@ -54,7 +54,7 @@ const noEditorOpen = {
 class CodePosServer {
   static editorRegion = undefined;
 
-  static getFileRowCol(x, y) {
+  static getFileRowCol(x, y, scaleCoords) {
     if (CodePosServer.editorRegion === undefined) {
       CodePosServer.editorRegion = document.getElementById("workbench.parts.editor");
     }
@@ -68,8 +68,10 @@ class CodePosServer {
       return noEditorOpen;
     }
 
-    x /= window.devicePixelRatio;
-    y /= window.devicePixelRatio;
+    if (scaleCoords) {
+      x /= window.devicePixelRatio;
+      y /= window.devicePixelRatio;
+    }
 
     const editor = CodePosServer.editorRegion.querySelector(".lines-content");
     const editorBox = editor.getBoundingClientRect();
@@ -225,7 +227,7 @@ class CodePosServer {
 
 function testCoords() {
   document.getElementsByTagName("body")[0].addEventListener("mousemove", (evnt) => {
-    let editor = CodePosServer.getFileRowCol(evnt.x, evnt.y);
+    let editor = CodePosServer.getFileRowCol(evnt.x, evnt.y, false);
     console.log("<response"
                 + " x=\"" + evnt.x + "\""
                 + " y=\"" + evnt.y + "\""
