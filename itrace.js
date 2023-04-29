@@ -19,7 +19,7 @@ class OutputFileWriter {
   }
 
   write_gaze(event_id, x, y) {
-    let pos = CodePosServer.getFileRowCol(x, y, true);
+    let editor = CodePosServer.getFileRowCol(x, y, true);
     this.file.write("        <response"
                     + " event_id=\"" + event_id + "\""
                     + " plugin_time=\"" + (new Date()).getTime().toString() + "\""
