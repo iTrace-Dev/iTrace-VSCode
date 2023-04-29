@@ -104,8 +104,8 @@ class CodePosServer {
       .forEach((l) => {
         const num = parseInt(l.innerText);
         if (num > lineNum) {
-            lineNum = num;
-            lineNumRect = l.getBoundingClientRect();
+          lineNum = num;
+          lineNumRect = l.getBoundingClientRect();
         }
       });
 
@@ -125,27 +125,27 @@ class CodePosServer {
       });
       let overGap = false;
       lineSpan.forEach((l) => {
-          const rowRect = l.firstChild.getBoundingClientRect();
-          let totalLength = 0;
-          let lineLength = 0;
-          if (l.firstChild.firstChild.classList.length == 0) {
-            const rect = l.firstChild.firstChild.getBoundingClientRect();
-            const lineRect = l.getBoundingClientRect();
-            if (x >= rect.left && x <= rect.right && y >= lineRect.top && y <= lineRect.bottom) {
-                overGap = true;
-            }
-            lineLength = Math.floor((x - editorLeft - (rect.right - rect.left)) / charWidth);
-            totalLength = Math.floor((rowRect.right - editorLeft - (rect.right - rect.left)) / charWidth);
-          } else {
-            lineLength  = Math.floor((x - editorLeft) / charWidth);
-            totalLength = Math.floor((rowRect.right - editorLeft) / charWidth);
+        const rowRect = l.firstChild.getBoundingClientRect();
+        let totalLength = 0;
+        let lineLength = 0;
+        if (l.firstChild.firstChild.classList.length == 0) {
+          const rect = l.firstChild.firstChild.getBoundingClientRect();
+          const lineRect = l.getBoundingClientRect();
+          if (x >= rect.left && x <= rect.right && y >= lineRect.top && y <= lineRect.bottom) {
+            overGap = true;
           }
+          lineLength = Math.floor((x - editorLeft - (rect.right - rect.left)) / charWidth);
+          totalLength = Math.floor((rowRect.right - editorLeft - (rect.right - rect.left)) / charWidth);
+        } else {
+          lineLength  = Math.floor((x - editorLeft) / charWidth);
+          totalLength = Math.floor((rowRect.right - editorLeft) / charWidth);
+        }
 
-          if (y >= rowRect.top && y <= rowRect.bottom) {
-            lineCol += lineLength;
-          } else {
-            lineCol += totalLength;
-          }
+        if (y >= rowRect.top && y <= rowRect.bottom) {
+          lineCol += lineLength;
+        } else {
+          lineCol += totalLength;
+        }
       });
       if (overGap || lineCol <= 1) {
         lineCol = -1;
@@ -157,15 +157,13 @@ class CodePosServer {
       .getAttribute("data-uri").replace("file:///","").replace("%3A",":");
     const openFile = openFileTemp[0].toUpperCase() + openFileTemp.slice(1);
 
-    if (CodePosServer.inWindow(
-          ".monaco-hover, "
-          + ".zone-widget, "
-          + ".lightBulbWidget, "
-          + ".codelens-decoration, "
-          + ".quick-input-widget, "
-          + ".suggest-widget, "
-          + ".suggest-details-container"
-          , x, y)
+    if (CodePosServer.inWindow(".monaco-hover, "
+                               + ".zone-widget, "
+                               + ".lightBulbWidget, "
+                               + ".codelens-decoration, "
+                               + ".quick-input-widget, "
+                               + ".suggest-widget, "
+                               + ".suggest-details-container", x, y)
         || openFile.length == 0
         || !CodePosServer.inWindow(".part.editor", x, y)
         || !line || lineNum < 1 || lineCol < 1) {
@@ -193,9 +191,9 @@ class CodePosServer {
   static inWindow(selector, x, y) {
     const objects = Array.from(document.querySelectorAll(selector));
     return objects?.some((o) => {
-          const rect = o.getBoundingClientRect();
-          return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
-        });
+      const rect = o.getBoundingClientRect();
+      return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
+    });
   }
 
   coordsCallback(websocketEvent) {
