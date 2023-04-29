@@ -40,12 +40,10 @@ class OutputFileWriter {
 }
 
 const noEditorOpen = {
-  line: undefined,
   lineNum: -1,
   lineCol: -1,
   lineLeft: -1,
   lineTop: -1,
-  charWidth: -1,
   lineHeight: -1,
   fontSize: -1,
   openFile: "",
@@ -77,96 +75,101 @@ class CodePosServer {
     const editorBox = editor.getBoundingClientRect();
     const editorLeft = editorBox.left;
 
-    let line = undefined;
-    let lineHeight = -1;
-    let lineLeft = -1;
-    let lineTop = -1;
-    const lines = Array.from(document.querySelectorAll(".view-line"));
-    if (lines?.length > 0) {
-      lines.filter((l) => {
-        const rect = l.getBoundingClientRect();
-        return y >= rect.top && y <= rect.bottom;
-      }).forEach((l) => {
-        const rowRect = l.firstChild.getBoundingClientRect();
-        if (x >= rowRect.left && x <= rowRect.right) {
-          line = l.firstChild;
-          lineHeight = l.getBoundingClientRect().height;
-          lineLeft = rowRect.left;
-          lineTop = rowRect.top;
-        }
-      });
-    }
-
-    let lineNum = -1;
-    let lineNumRect = undefined;
-    lineNumbers
-      .filter((l) => y >= l.getBoundingClientRect().top)
-      .forEach((l) => {
-        const num = parseInt(l.innerText);
-        if (num > lineNum) {
-          lineNum = num;
-          lineNumRect = l.getBoundingClientRect();
-        }
-      });
-
-    let charWidth = -1;
-    let fontSize = -1;
-    if (line) {
-      const lineBox = line.getBoundingClientRect();
-      charWidth = lineBox.width / line.innerText.length;
-      fontSize = parseFloat(window.getComputedStyle(line, null).fontSize);
-    }
-
-    let lineCol = 1;
-    if (lineNumRect && lines?.length > 0) {
-      const lineSpan = lines.filter((l) => {
-        const rect = l.getBoundingClientRect();
-        return rect.top <= y && rect.top >= lineNumRect.top;
-      });
-      let overGap = false;
-      lineSpan.forEach((l) => {
-        const rowRect = l.firstChild.getBoundingClientRect();
-        let totalLength = 0;
-        let lineLength = 0;
-        if (l.firstChild.firstChild.classList.length == 0) {
-          const rect = l.firstChild.firstChild.getBoundingClientRect();
-          const lineRect = l.getBoundingClientRect();
-          if (x >= rect.left && x <= rect.right && y >= lineRect.top && y <= lineRect.bottom) {
-            overGap = true;
-          }
-          lineLength = Math.floor((x - editorLeft - (rect.right - rect.left)) / charWidth);
-          totalLength = Math.floor((rowRect.right - editorLeft - (rect.right - rect.left)) / charWidth);
-        } else {
-          lineLength  = Math.floor((x - editorLeft) / charWidth);
-          totalLength = Math.floor((rowRect.right - editorLeft) / charWidth);
-        }
-
-        if (y >= rowRect.top && y <= rowRect.bottom) {
-          lineCol += lineLength;
-        } else {
-          lineCol += totalLength;
-        }
-      });
-      if (overGap || lineCol <= 1) {
-        lineCol = -1;
-      }
-    }
-
     let openFileTemp = CodePosServer.editorRegion
       .querySelector(".monaco-editor")
-      .getAttribute("data-uri").replace("file:///","").replace("%3A",":");
+      .getAttribute("data-uri").replace("file:///", "").replace("%3A", ":");
     const openFile = openFileTemp[0].toUpperCase() + openFileTemp.slice(1);
 
-    if (CodePosServer.inWindow(".monaco-hover, "
+    // things that mean we can skip row/col computation
+    const noRowCol = CodePosServer.inWindow(".monaco-hover, "
                                + ".zone-widget, "
                                + ".lightBulbWidget, "
                                + ".codelens-decoration, "
                                + ".quick-input-widget, "
                                + ".suggest-widget, "
                                + ".suggest-details-container", x, y)
-        || openFile.length == 0
-        || !CodePosServer.inWindow(".part.editor", x, y)
-        || !line || lineNum < 1 || lineCol < 1) {
+                     || openFile.length == 0
+                     || !CodePosServer.inWindow(".part.editor", x, y);
+
+    let lineNum = -1;
+    let lineCol = 1;
+    let lineLeft = -1;
+    let lineTop = -1;
+    let lineHeight = -1;
+    let fontSize = -1;
+
+    if (!noRowCol) {
+      const lines = Array.from(document.querySelectorAll(".view-line"));
+      if (lines?.length > 0) {
+        let line = undefined;
+
+        lines.filter((l) => {
+          const rect = l.getBoundingClientRect();
+          return y >= rect.top && y <= rect.bottom;
+        }).forEach((l) => {
+          const rowRect = l.firstChild.getBoundingClientRect();
+          if (x >= rowRect.left && x <= rowRect.right) {
+            line = l.firstChild;
+            lineHeight = l.getBoundingClientRect().height;
+            lineLeft = rowRect.left;
+            lineTop = rowRect.top;
+          }
+        });
+
+        if (line) {
+          // get character info
+          const charWidth = line.getBoundingClientRect().width / line.innerText.length;
+          fontSize = parseFloat(window.getComputedStyle(line, null).fontSize);
+
+          // get row
+          let lineNumRectTop = undefined;
+          lineNumbers
+            .filter((l) => y >= l.getBoundingClientRect().top)
+            .forEach((l) => {
+              const num = parseInt(l.innerText);
+              if (num > lineNum) {
+                lineNum = num;
+                lineNumRectTop = l.getBoundingClientRect().top;
+              }
+            });
+
+          // get column
+          let overGap = false;
+          lines
+            .filter((l) => {
+              const rect = l.getBoundingClientRect();
+              return rect.top <= y && rect.top >= lineNumRectTop;
+            })
+            .forEach((l) => {
+              const rowRect = l.firstChild.getBoundingClientRect();
+              if (l.firstChild.firstChild.classList.length == 0) {
+                const rect = l.firstChild.firstChild.getBoundingClientRect();
+                const lineRect = l.getBoundingClientRect();
+                if (x >= rect.left && x <= rect.right && y >= lineRect.top && y <= lineRect.bottom) {
+                  overGap = true;
+                }
+                if (y >= rowRect.top && y <= rowRect.bottom) {
+                  lineCol += Math.floor((x - editorLeft - (rect.right - rect.left)) / charWidth);
+                } else {
+                  lineCol += Math.floor((rowRect.right - editorLeft - (rect.right - rect.left)) / charWidth);
+                }
+              } else {
+                if (y >= rowRect.top && y <= rowRect.bottom) {
+                  lineCol += Math.floor((x - editorLeft) / charWidth);
+                } else {
+                  lineCol += Math.floor((rowRect.right - editorLeft) / charWidth);
+                }
+              }
+            });
+
+          if (overGap || lineCol <= 1) {
+            lineCol = -1;
+          }
+        }
+      }
+    }
+
+    if (lineNum < 1 || lineCol < 1) {
       lineNum = -1;
       lineCol = -1;
       lineLeft = -1;
@@ -175,13 +178,10 @@ class CodePosServer {
 
     // these could be cached and only updated when a MutationObserver fires
     return {
-      editorLeft,
-      line,
       lineNum,
       lineCol,
       lineLeft,
       lineTop,
-      charWidth,
       lineHeight,
       fontSize,
       openFile,
