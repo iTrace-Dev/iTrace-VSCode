@@ -202,6 +202,7 @@ class CodePosServer {
     let data_arr = websocketEvent.data.trim().split(",");
     if (data_arr[0] == "session_end" || data_arr[0] == "session_stop") {
       this.writer.close_writer();
+      this.writer = undefined;
     } else if (data_arr[0] == "session_start") {
       this.writer = new OutputFileWriter(data_arr[3], data_arr[1]);
     } else if (data_arr[0] == "gaze") {
@@ -227,9 +228,11 @@ class CodePosServer {
     this.ws.addEventListener("error", (event) => {
       console.log("WebSocket error: ", event);
       this.writer?.close_writer();
+      this.writer = undefined;
     });
     this.ws.addEventListener("close", (event) => {
       this.writer?.close_writer();
+      this.writer = undefined;
     });
   }
 }
