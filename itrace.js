@@ -141,23 +141,25 @@ class CodePosServer {
               return rect.top <= y && rect.top >= lineNumRectTop;
             })
             .forEach((l) => {
-              const rowRect = l.firstChild.getBoundingClientRect();
-              if (l.firstChild.firstChild.classList.length == 0) {
-                const rect = l.firstChild.firstChild.getBoundingClientRect();
+              if (l.firstChild) {
                 const lineRect = l.getBoundingClientRect();
-                if (x >= rect.left && x <= rect.right && y >= lineRect.top && y <= lineRect.bottom) {
-                  overGap = true;
-                }
-                if (y >= rowRect.top && y <= rowRect.bottom) {
-                  lineCol += Math.floor((x - editorLeft - (rect.right - rect.left)) / charWidth);
+                const rowRect = l.firstChild.getBoundingClientRect();
+                if (l.firstChild.firstChild.classList.length == 0) {
+                  const rect = l.firstChild.firstChild.getBoundingClientRect();
+                  if (x >= rect.left && x <= rect.right && y >= lineRect.top && y <= lineRect.bottom) {
+                    overGap = true;
+                  }
+                  if (y >= lineRect.top && y <= lineRect.bottom) {
+                    lineCol += Math.floor((x - editorLeft - (rect.right - rect.left)) / charWidth);
+                  } else {
+                    lineCol += Math.floor((rowRect.right - editorLeft - (rect.right - rect.left)) / charWidth);
+                  }
                 } else {
-                  lineCol += Math.floor((rowRect.right - editorLeft - (rect.right - rect.left)) / charWidth);
-                }
-              } else {
-                if (y >= rowRect.top && y <= rowRect.bottom) {
-                  lineCol += Math.floor((x - editorLeft) / charWidth);
-                } else {
-                  lineCol += Math.floor((rowRect.right - editorLeft) / charWidth);
+                  if (y >= lineRect.top && y <= lineRect.bottom) {
+                    lineCol += Math.floor((x - editorLeft) / charWidth);
+                  } else {
+                    lineCol += Math.floor((rowRect.right - editorLeft) / charWidth);
+                  }
                 }
               }
             });
@@ -192,7 +194,7 @@ class CodePosServer {
     const objects = Array.from(document.querySelectorAll(selector));
     return objects?.some((o) => {
       const rect = o.getBoundingClientRect();
-      return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
+      return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
     });
   }
 
