@@ -69,6 +69,8 @@ class CodePosServer {
     if (scaleCoords) {
       x /= window.devicePixelRatio;
       y /= window.devicePixelRatio;
+      x -= window.screenLeft;
+      y -= window.screenTop;
     }
 
     const editor = CodePosServer.editorRegion.querySelector(".lines-content");
