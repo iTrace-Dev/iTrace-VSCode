@@ -123,13 +123,16 @@ class CodePosServer {
 
           // get row
           let lineNumRectTop = undefined;
+          let lastY = -1;
           lineNumbers
             .filter((l) => y >= l.getBoundingClientRect().top)
             .forEach((l) => {
               const num = parseInt(l.innerText);
-              if (num > lineNum) {
+              const rect = l.getBoundingClientRect();
+              if (rect.top > lastY) {
                 lineNum = num;
-                lineNumRectTop = l.getBoundingClientRect().top;
+                lineNumRectTop = rect.top;
+                lastY = rect.top;
               }
             });
 
