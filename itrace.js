@@ -51,6 +51,8 @@ const noEditorOpen = {
 
 class CodePosServer {
   static editorRegion = undefined;
+  static statusIndicator = undefined;
+  session_id = -1;
 
   static getFileRowCol(x, y, scaleCoords) {
     if (CodePosServer.editorRegion === undefined) {
@@ -206,14 +208,17 @@ class CodePosServer {
   coordsCallback(websocketEvent) {
     let data_arr = websocketEvent.data.trim().split(",");
     if (data_arr[0] == "session_end" || data_arr[0] == "session_stop") {
-      this.writer.close_writer();
       this.hideStatusIndicator();
+      this.writer.close_writer();
       this.writer = undefined;
     } else if (data_arr[0] == "session_start") {
       this.writer = new OutputFileWriter(data_arr[3], data_arr[1]);
-      this.showStatusIndicator(data_arr[1]);
+      this.session_id = data_arr[1];
+      this.showStatusIndicator();
     } else if (data_arr[0] == "gaze") {
       this.writer.write_gaze(data_arr[1], parseInt(data_arr[2]), parseInt(data_arr[3]));
+      if (CodePosServer.statusIndicator === undefined)
+        this.showStatusIndicator();
     } else {
       console.log("Unsupported message: " + websocketEvent.data);
     }
@@ -234,23 +239,23 @@ class CodePosServer {
     };
     this.ws.addEventListener("error", (event) => {
       console.log("WebSocket error: ", event);
-      this.writer?.close_writer();
       this.hideStatusIndicator();
+      this.writer?.close_writer();
       this.writer = undefined;
     });
     this.ws.addEventListener("close", (event) => {
-      this.writer?.close_writer();
       this.hideStatusIndicator();
+      this.writer?.close_writer();
       this.writer = undefined;
     });
   }
 
-  showStatusIndicator(session_id) {
+  showStatusIndicator() {
     // <div id="status.editor.indentation" class="statusbar-item right" aria-label="label">
     //   <a style="font-weight: bold; color: #f00" tabindex="-1" role="button" class="statusbar-item-label" aria-label="label">label</a>
     //   <div class="status-bar-item-beak-container"></div>
     // </div>
-    let label = "iTrace: " + session_id;
+    let label = "iTrace: " + this.session_id;
 
     let link = document.createElement("a");
     link.tabindex = "-1";
@@ -270,11 +275,16 @@ class CodePosServer {
     div.appendChild(link);
     div.appendChild(div2);
 
-    document.getElementsByClassName('right-items')[0].appendChild(div);
+    let statusbar = document.getElementsByClassName('right-items');
+    if (statusbar?.length) {
+      statusbar[0].prepend(div);
+      CodePosServer.statusIndicator = true;
+    }
   }
 
   hideStatusIndicator() {
     document.getElementById('status.itrace.session')?.remove();
+    CodePosServer.statusIndicator = false;
   }
 }
 
