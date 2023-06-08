@@ -208,9 +208,10 @@ class CodePosServer {
   coordsCallback(websocketEvent) {
     let data_arr = websocketEvent.data.trim().split(",");
     if (data_arr[0] == "session_end" || data_arr[0] == "session_stop") {
-      this.hideStatusIndicator();
       this.writer.close_writer();
       this.writer = undefined;
+      this.session_id = -1;
+      this.showStatusIndicator();
     } else if (data_arr[0] == "session_start") {
       this.writer = new OutputFileWriter(data_arr[3], data_arr[1]);
       this.session_id = data_arr[1];
@@ -235,31 +236,45 @@ class CodePosServer {
       if (this.ws) {
         this.ws.close();
         this.ws = undefined;
+        this.hideStatusIndicator();
+        this.writer?.close_writer();
+        this.writer = undefined;
+        this.session_id = -1;
+        var _this = this;
+        setTimeout(function() { _this.restart(); }, 5000);
       }
     };
+    this.ws.addEventListener("open", (event) => {
+      this.showStatusIndicator();
+    });
     this.ws.addEventListener("error", (event) => {
       console.log("WebSocket error: ", event);
-      this.hideStatusIndicator();
-      this.writer?.close_writer();
-      this.writer = undefined;
+      this.stop();
     });
     this.ws.addEventListener("close", (event) => {
-      this.hideStatusIndicator();
-      this.writer?.close_writer();
-      this.writer = undefined;
+      this.stop();
     });
   }
 
   showStatusIndicator() {
+    this.hideStatusIndicator();
+
     // <div id="status.editor.indentation" class="statusbar-item right" aria-label="label">
     //   <a style="font-weight: bold; color: #f00" tabindex="-1" role="button" class="statusbar-item-label" aria-label="label">label</a>
     //   <div class="status-bar-item-beak-container"></div>
     // </div>
-    let label = "iTrace: " + this.session_id;
+    let label = "iTrace";
+    if (this.session_id > -1) {
+      label += ": " + this.session_id;
+    }
 
     let link = document.createElement("a");
     link.tabindex = "-1";
-    link.style = "font-weight: bold; color: #fff; background-color: #275DB2";
+    if (this.session_id > -1) {
+      link.style = "font-weight: bold; color: #fff; background-color: #275DB2";
+    } else {
+      link.style = "color: #fff; background-color: #C27A72";
+    }
     link.role = "button";
     link.classList = ["statusbar-item-label"];
     link.ariaLabel = label;
