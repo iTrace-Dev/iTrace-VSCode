@@ -207,9 +207,11 @@ class CodePosServer {
     let data_arr = websocketEvent.data.trim().split(",");
     if (data_arr[0] == "session_end" || data_arr[0] == "session_stop") {
       this.writer.close_writer();
+      this.hideStatusIndicator();
       this.writer = undefined;
     } else if (data_arr[0] == "session_start") {
       this.writer = new OutputFileWriter(data_arr[3], data_arr[1]);
+      this.showStatusIndicator(data_arr[1]);
     } else if (data_arr[0] == "gaze") {
       this.writer.write_gaze(data_arr[1], parseInt(data_arr[2]), parseInt(data_arr[3]));
     } else {
@@ -233,12 +235,46 @@ class CodePosServer {
     this.ws.addEventListener("error", (event) => {
       console.log("WebSocket error: ", event);
       this.writer?.close_writer();
+      this.hideStatusIndicator();
       this.writer = undefined;
     });
     this.ws.addEventListener("close", (event) => {
       this.writer?.close_writer();
+      this.hideStatusIndicator();
       this.writer = undefined;
     });
+  }
+
+  showStatusIndicator(session_id) {
+    // <div id="status.editor.indentation" class="statusbar-item right" aria-label="label">
+    //   <a style="font-weight: bold; color: #f00" tabindex="-1" role="button" class="statusbar-item-label" aria-label="label">label</a>
+    //   <div class="status-bar-item-beak-container"></div>
+    // </div>
+    let label = "iTrace: " + session_id;
+
+    let link = document.createElement("a");
+    link.tabindex = "-1";
+    link.style = "font-weight: bold; color: #fff; background-color: #275DB2";
+    link.role = "button";
+    link.classList = ["statusbar-item-label"];
+    link.ariaLabel = label;
+    link.textContent = label;
+
+    let div2 = document.createElement("div");
+    div2.classList = ["status-bar-item-beak-container"];
+
+    let div = document.createElement("div");
+    div.id = "status.itrace.session";
+    div.classList = ["statusbar-item right"];
+    div.ariaLabel = label;
+    div.appendChild(link);
+    div.appendChild(div2);
+
+    document.getElementsByClassName('right-items')[0].appendChild(div);
+  }
+
+  hideStatusIndicator() {
+    document.getElementById('status.itrace.session')?.remove();
   }
 }
 
