@@ -285,7 +285,7 @@ class CodePosServer {
 
     let div = document.createElement("div");
     div.id = "status.itrace.session";
-    div.classList = ["statusbar-item right"];
+    div.classList = ["statusbar-item right has-background-color"];
     div.ariaLabel = label;
     div.appendChild(link);
     div.appendChild(div2);
