@@ -6,8 +6,6 @@ There are two options to use iTrace-VSCode. VSCode's extension API does not prov
 Tested on VSCode Version: 1.77.3.
 
 ## Current Limitations/Assumptions
-Both options assume the VSCode window is maximized (or at the very least, positioned in the top-left corner of the screen).
-
 There is not currently support for having multiple editors visible at a time (e.g., split editing mode).  Tabbed editing works fine.
 
 ### VSCode DevTools
