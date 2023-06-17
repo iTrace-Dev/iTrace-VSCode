@@ -304,23 +304,29 @@ class CodePosServer {
 }
 
 function testCoords() {
-  document.getElementsByTagName("body")[0].addEventListener("mousemove", (evnt) => {
-    let editor = CodePosServer.getFileRowCol(evnt.x, evnt.y, false);
-    console.log("<response"
-                + " x=\"" + evnt.x + "\""
-                + " y=\"" + evnt.y + "\""
-                + " gaze_target=\"" + editor.openFile.split(/[\\/]/).at(-1) + "\""
-                + " gaze_target_type=\"" + editor.openFile.split(".").at(-1) + "\""
-                + " source_file_path=\"" + editor.openFile + "\""
-                + " source_file_line=\"" + editor.lineNum.toString() + "\""
-                + " source_file_col=\"" + editor.lineCol.toString() + "\""
-                + " editor_line_height=\"" + editor.lineHeight + "\""
-                + " editor_font_height=\"" + editor.fontSize + "\""
-                + " editor_line_base_x=\"" + editor.lineLeft + "\""
-                + " editor_line_base_y=\"" + editor.lineTop + "\""
-                + "/>"
-                );
-  });
+  document.getElementsByTagName("body")[0].addEventListener("mousemove", testCoordsListener);
+}
+
+function testCoordsStop() {
+  document.getElementsByTagName("body")[0].removeEventListener("mousemove", testCoordsListener);
+}
+
+function testCoordsListener(evnt) {
+  let editor = CodePosServer.getFileRowCol(evnt.x, evnt.y, false);
+  console.log("<response"
+              + " x=\"" + evnt.x + "\""
+              + " y=\"" + evnt.y + "\""
+              + " gaze_target=\"" + editor.openFile.split(/[\\/]/).at(-1) + "\""
+              + " gaze_target_type=\"" + editor.openFile.split(".").at(-1) + "\""
+              + " source_file_path=\"" + editor.openFile + "\""
+              + " source_file_line=\"" + editor.lineNum.toString() + "\""
+              + " source_file_col=\"" + editor.lineCol.toString() + "\""
+              + " editor_line_height=\"" + editor.lineHeight + "\""
+              + " editor_font_height=\"" + editor.fontSize + "\""
+              + " editor_line_base_x=\"" + editor.lineLeft + "\""
+              + " editor_line_base_y=\"" + editor.lineTop + "\""
+              + "/>"
+              );
 }
 
 let scanner = new CodePosServer()
