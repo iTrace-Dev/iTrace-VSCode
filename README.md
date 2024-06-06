@@ -5,6 +5,8 @@ There are two options to use iTrace-VSCode. VSCode's extension API does not prov
 
 Tested on VSCode Version: [1.77.3](https://code.visualstudio.com/updates/v1_77).
 
+Note that versions of VSCode after 1.77.3 made a breaking change, and iTrace will fail to load in them.  This means you will need a separate installation of VSCode pinned to version 1.77.3.
+
 ## Current Limitations/Assumptions
 There is not currently support for having multiple editors visible at a time (e.g., split editing mode).  Tabbed editing works fine.
 
