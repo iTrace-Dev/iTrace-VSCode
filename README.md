@@ -3,7 +3,7 @@
 ## Using iTrace-VSCode
 There are two options to use iTrace-VSCode. VSCode's extension API does not provide access to the underlying DOM information, iTrace-VSCode must be loaded in as JavaScript into VSCode's DOM.
 
-Tested on VSCode Version: 1.77.3.
+Tested on VSCode Version: [1.77.3](https://code.visualstudio.com/updates/v1_77).
 
 ## Current Limitations/Assumptions
 There is not currently support for having multiple editors visible at a time (e.g., split editing mode).  Tabbed editing works fine.
