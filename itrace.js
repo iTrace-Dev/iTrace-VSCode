@@ -1,26 +1,34 @@
-const fs = require("fs");
-
 class OutputFileWriter {
   constructor(directory, session_id) {
+    this.save_name = "itrace_vscode-" + (new Date()).getTime().toString() + ".xml";
     const filename = directory + "\\itrace_vscode-" + (new Date()).getTime().toString() + ".xml";
     console.log("iTrace: session started :: " + filename);
-    this.file = fs.createWriteStream(filename);
-    this.file.write("<?xml version=\"1.0\"?>\n");
-    this.file.write("<itrace_plugin session_id=\"" + session_id + "\">\n");
-    this.file.write("    <environment screen_width=\"" + window.screen.width.toString() + "\" screen_height=\"" + window.screen.height.toString() + "\" plugin_type=\"VSCODE\"/>\n");
-    this.file.write("    <gazes>\n");
+    // this.file = fs.createWriteStream(filename);
+    
+    this.file = ""
+    this.file += "<?xml version=\"1.0\"?>\n";
+    this.file += "<itrace_plugin session_id=\"" + session_id + "\">\n";
+    this.file += "    <environment screen_width=\"" + window.screen.width.toString() + "\" screen_height=\"" + window.screen.height.toString() + "\" plugin_type=\"VSCODE\"/>\n";
+    this.file += "    <gazes>\n";
   }
 
   close_writer() {
-    this.file.write("    </gazes>\n");
-    this.file.write("</itrace_plugin>\n");
-    this.file.end();
+    this.file += "    </gazes>\n";
+    this.file += "</itrace_plugin>\n";
+    
+    const blob = new Blob([this.file], { type:"text/plain"});
+    const link = document.createElement('a');
+    link.download = this.save_name;
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    URL.revokeObjectURL(link.href);
+
     console.log("iTrace: session finished");
   }
 
   write_gaze(event_id, x, y) {
     let editor = CodePosServer.getFileRowCol(x, y, true);
-    this.file.write("        <response"
+    this.file += "        <response"
                     + " event_id=\"" + event_id + "\""
                     + " plugin_time=\"" + (new Date()).getTime().toString() + "\""
                     + " x=\"" + x + "\""
@@ -35,7 +43,7 @@ class OutputFileWriter {
                     + " editor_line_base_x=\"" + editor.lineLeft + "\""
                     + " editor_line_base_y=\"" + editor.lineTop + "\""
                     + "/>\n"
-                   );
+                  ;
   }
 }
 
