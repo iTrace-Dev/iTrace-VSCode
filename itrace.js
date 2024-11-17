@@ -3,7 +3,6 @@ class OutputFileWriter {
     this.save_name = "itrace_vscode-" + (new Date()).getTime().toString() + ".xml";
     const filename = directory + "\\itrace_vscode-" + (new Date()).getTime().toString() + ".xml";
     console.log("iTrace: session started :: " + filename);
-    // this.file = fs.createWriteStream(filename);
     
     this.file = ""
     this.file += "<?xml version=\"1.0\"?>\n";
