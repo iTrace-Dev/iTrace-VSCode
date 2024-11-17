@@ -1,8 +1,7 @@
 class OutputFileWriter {
   constructor(directory, session_id) {
     this.save_name = "itrace_vscode-" + (new Date()).getTime().toString() + ".xml";
-    const filename = directory + "\\itrace_vscode-" + (new Date()).getTime().toString() + ".xml";
-    console.log("iTrace: session started :: " + filename);
+    console.log("iTrace: session started :: " + this.save_name);
     
     this.file = ""
     this.file += "<?xml version=\"1.0\"?>\n";
