@@ -8,7 +8,6 @@ testing iTrace plugins.
 
 Requires the following Node packages:
 
-- fs
 - http
 - robotjs
 - ws

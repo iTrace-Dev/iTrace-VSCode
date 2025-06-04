@@ -1,9 +1,7 @@
 {
   "dependencies": {
-    "fs": ">=0.0.1-security",
     "http": ">=0.0.1-security",
     "robotjs": ">=0.6.0",
-    "tar-fs": ">=3.0.9",
     "ws": ">=8.17.1"
   }
 }
