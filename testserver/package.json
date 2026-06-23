@@ -2,6 +2,6 @@
   "dependencies": {
     "http": ">=0.0.1-security",
     "robotjs": ">=0.6.0",
-    "ws": ">=8.17.1"
+    "ws": ">=8.21.0"
   }
 }
